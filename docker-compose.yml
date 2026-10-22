@@ -1,0 +1,50 @@
+name: humaniti-ai
+
+x-app: &app
+  build: .
+  image: humaniti-ai
+  restart: unless-stopped
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # published so an API running natively on Windows can queue jobs for the dockerised worker
+    ports: ["6379:6379"]
+
+  api:
+    <<: *app
+    command: uvicorn app.api.main:app --host 0.0.0.0 --port 8000
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      # log timestamps in IST, like everything the frontend shows
+      TZ: Asia/Kolkata
+    ports: ["8000:8000"]
+    volumes: ["./data:/app/data"]
+    depends_on: [redis]
+
+  worker:
+    <<: *app
+    command: python worker.py
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      TZ: Asia/Kolkata
+    volumes: ["./data:/app/data", "./models:/app/models"]
+    depends_on: [redis]
+
+  # no env_file: the frontend only talks to the API and must never see the DB URL or API key
+  frontend:
+    build: ./frontend
+    image: humaniti-ai-frontend
+    restart: unless-stopped
+    # recordings run to a few hundred MB; Streamlit's default upload limit is 200 MB
+    command: streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.maxUploadSize 2048
+      --client.toolbarMode viewer
+    environment:
+      API_URL: http://api:8000
+      # taken from .env by compose variable substitution; the rest of .env never reaches this container
+      API_KEY: ${API_KEY}
+    ports: ["8501:8501"]
+    depends_on: [api]

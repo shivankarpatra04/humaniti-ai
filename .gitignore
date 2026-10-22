@@ -1,0 +1,17 @@
+.env
+.venv/
+data/
+models/
+samples/
+holdout/
+*.mp4
+*.mkv
+*.webm
+*.wav
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.qodo/
+ai_history/raw/
+tutors.json
+*.zip
