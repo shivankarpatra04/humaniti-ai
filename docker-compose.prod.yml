@@ -7,8 +7,10 @@ services:
   api:
     ports: !reset []
     environment:
-      # the browser fetches the signed video link through Caddy, on the same address as the frontend
-      PUBLIC_API_URL: https://${DOMAIN:?set DOMAIN in .env}
+      # Caddy serves the API under /api and strips the prefix; the report's player streams the video from here
+      PUBLIC_API_URL: https://${DOMAIN:?set DOMAIN in .env}/api
+      # tells FastAPI it is mounted under /api, so /api/docs loads its schema from /api/openapi.json
+      UVICORN_ROOT_PATH: /api
 
   worker:
     # one RQ worker, one job at a time: Whisper already uses both vCPUs, so a second job would only slow both

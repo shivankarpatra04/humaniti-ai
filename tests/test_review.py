@@ -161,6 +161,16 @@ def test_the_video_streams_through_a_signed_link(api):
     assert api.get(f"/evaluations/{evaluation_id}/video-url").status_code == 404
 
 
+def test_video_link_keeps_the_proxy_prefix(api, monkeypatch):
+    # in production Caddy serves the API under /api, and the player must ask for the video there
+    monkeypatch.setattr(settings, "public_api_url", "https://demo.sslip.io/api/")
+    evaluation_id = upload(api)["id"]
+
+    link = api.get(f"/evaluations/{evaluation_id}/video-url").json()["url"]
+
+    assert link.startswith(f"https://demo.sslip.io/api/evaluations/{evaluation_id}/video?expires=")
+
+
 def test_video_links_expire(api, monkeypatch):
     evaluation_id = upload(api)["id"]
     link = urlsplit(api.get(f"/evaluations/{evaluation_id}/video-url").json()["url"])

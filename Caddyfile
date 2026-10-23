@@ -15,9 +15,9 @@
 		max_size 1100MiB
 	}
 
-	# the report's player streams the recording with a signed, expiring link; nothing else of the API is public
-	@video path_regexp ^/evaluations/\d+/video$
-	handle @video {
+	# PUBLIC_API_URL is https://$DOMAIN/api; the prefix is stripped, so the API keeps its own paths.
+	# Every route except /health and the signed video link still needs the X-API-Key header.
+	handle_path /api/* {
 		reverse_proxy api:8000
 	}
 

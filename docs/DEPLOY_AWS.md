@@ -2,13 +2,14 @@
 
 One Ubuntu 24.04 EC2 instance runs everything with Docker Compose: Caddy, the Streamlit frontend, the API, the
 worker and Redis. Supabase stays the database. Caddy is the only service with host ports (80 and 443), with an
-automatic Let's Encrypt certificate. It forwards everything to the frontend except `/evaluations/<id>/video`, the
-signed, expiring link the report's player streams the recording from. The rest of the API, Redis and the worker
-publish no ports.
+automatic Let's Encrypt certificate. It serves the API under `/api` (prefix stripped) and everything else from
+the frontend. The browser only uses `/api` for the report's player, which streams the recording through a signed
+link that expires after 10 minutes; every other API route still needs the `X-API-Key` header. Redis and the
+worker publish no ports.
 
 ```
-browser ──https──> Caddy :443 ──> frontend :8501 ──> api :8000 ──> redis ──> worker
-                         └─ /evaluations/<id>/video (signed link) ──> api :8000
+browser ──https──> Caddy :443 ─┬─ /*     ──> frontend :8501 ──> api :8000 ──> redis ──> worker
+                                └─ /api/* ──> api :8000 (the player's signed video link)
 ```
 
 ## 1. Launch the instance
@@ -130,7 +131,7 @@ Fill in:
 | `WHISPER_MODEL` | `small.en` (default) or `base.en`; see below |
 
 Leave `REDIS_URL` and `PUBLIC_API_URL` as they are. The compose files point the containers at `redis://redis:6379/0`,
-and `docker-compose.prod.yml` sets `PUBLIC_API_URL` to `https://$DOMAIN`.
+and `docker-compose.prod.yml` sets `PUBLIC_API_URL` to `https://$DOMAIN/api`.
 
 ### Whisper model on 2 vCPU
 
@@ -173,7 +174,8 @@ Check from another machine that only Caddy can be reached:
 
 ```bash
 curl -I http://<public-ip-with-dashes>.sslip.io           # 308 redirect to https
-curl -m 5 http://<public-ip-with-dashes>.sslip.io:8000    # times out: the API is not public
+curl https://<public-ip-with-dashes>.sslip.io/api/health  # {"status":"ok",...} through Caddy
+curl -m 5 http://<public-ip-with-dashes>.sslip.io:8000    # times out: port 8000 is not published
 ```
 
 All services have `restart: unless-stopped`, and Docker starts on boot, so the app comes back after a reboot or
@@ -238,6 +240,8 @@ df -h /
 - **"Cannot reach the Humaniti AI API":** `dcp logs api`. Usually `DATABASE_URL` is wrong or Supabase paused the
   project.
 - **Containers restart during transcription:** out of memory; check `free -h` and that swap is on (step 3).
+- **The report shows no video:** `https://<domain>/api/health` must answer, and
+  `dcp exec api printenv PUBLIC_API_URL` must print `https://<domain>/api`.
 - **Player says the link is invalid:** the instance clock is off, or `DOMAIN` changed after the page loaded;
   reload.
 - **Upload fails above 1 GB:** this is the limit everywhere (Caddy, Streamlit `--server.maxUploadSize`,
