@@ -67,7 +67,7 @@ with a timestamp. The Whisper model downloads into `models/` on first use.
 signed link that expires after 10 minutes. `PUBLIC_API_URL` (default `http://localhost:8000`) is the address that
 browser reaches the API at; set it when the app runs on another machine.
 
-**Production.** [docs/DEPLOY_GCP.md](docs/DEPLOY_GCP.md) runs the same stack on one VM behind Caddy (HTTPS,
+**Production.** [docs/DEPLOY_AWS.md](docs/DEPLOY_AWS.md) runs the same stack on one EC2 VM behind Caddy (HTTPS,
 1 GB uploads, a `DEMO_PASSWORD` gate) with `docker-compose.prod.yml`.
 
 ## Local run

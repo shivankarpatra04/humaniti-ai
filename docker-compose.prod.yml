@@ -11,6 +11,7 @@ services:
       PUBLIC_API_URL: https://${DOMAIN:?set DOMAIN in .env}
 
   worker:
+    # one RQ worker, one job at a time: Whisper already uses both vCPUs, so a second job would only slow both
     # a named volume keeps the Whisper model across rebuilds, so it downloads only once
     volumes: ["./data:/app/data", "whisper_models:/app/models"]
 
@@ -20,9 +21,9 @@ services:
       DEMO_PASSWORD: ${DEMO_PASSWORD:?set DEMO_PASSWORD in .env}
 
   caddy:
-    image: caddy:2.10-alpine
+    image: caddy:2
     restart: unless-stopped
-    ports: ["80:80", "443:443", "443:443/udp"]
+    ports: ["80:80", "443:443"]
     environment:
       DOMAIN: ${DOMAIN}
     volumes:
