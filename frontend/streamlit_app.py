@@ -1,3 +1,5 @@
+import hmac
+import os
 import re
 from datetime import UTC, date, datetime
 
@@ -7,6 +9,8 @@ from agreement import agreement_page
 from api import call_api, detail
 from history import tutor_history
 
+# unset locally, so the gate is off; docker-compose.prod.yml refuses to start without it
+DEMO_PASSWORD = os.environ.get("DEMO_PASSWORD", "")
 POLL_S = 5
 LEVELS = ["Beginner", "Intermediate", "Advanced"]
 STAGES = {
@@ -129,7 +133,24 @@ def live_progress(evaluation_id: int) -> None:
     )
 
 
+def unlocked() -> bool:
+    """The password is asked once per browser session; nothing else renders until it matches."""
+    if not DEMO_PASSWORD or st.session_state.get("unlocked"):
+        return True
+    st.title("Humaniti AI")
+    password = st.text_input("Password", type="password")
+    if not password:
+        return False
+    if not hmac.compare_digest(password.encode(), DEMO_PASSWORD.encode()):
+        st.error("Wrong password.")
+        return False
+    st.session_state.unlocked = True
+    st.rerun()
+
+
 st.set_page_config(page_title="Humaniti AI", page_icon="♟️", layout="wide")
+if not unlocked():
+    st.stop()
 page = st.navigation(
     [
         st.Page(new_evaluation, title="New evaluation", icon=":material/upload_file:", default=True),

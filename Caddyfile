@@ -1,0 +1,27 @@
+{
+	servers {
+		# a 1 GB upload over a slow uplink takes many minutes; no write timeout so long video streams are not cut
+		timeouts {
+			read_header 30s
+			read_body 30m
+			idle 10m
+		}
+	}
+}
+
+{$DOMAIN} {
+	# Streamlit and the API both cap uploads at 1024 MiB; leave room for the multipart overhead
+	request_body {
+		max_size 1100MiB
+	}
+
+	# the report's player streams the recording with a signed, expiring link; nothing else of the API is public
+	@video path_regexp ^/evaluations/\d+/video$
+	handle @video {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy frontend:8501
+	}
+}

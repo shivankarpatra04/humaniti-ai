@@ -4,6 +4,7 @@ import report
 from conftest import finished_evaluation
 from criteria import CRITERIA
 from history import history_rows
+from streamlit.testing.v1 import AppTest
 
 
 def criterion(name: str, verdict: str = "met", timestamp: str = "", evidence: str = "", suggestion: str = ""):
@@ -78,3 +79,14 @@ def test_history_marks_criteria_repeated_as_not_met(api, sessions):
     assert history["repeated_issues"] == {"homework": 2}
     assert [row["Date"] for row in rows] == ["25/07/2026", "18/07/2026"]
     assert rows[0]["Issues (not met)"] == "🔁 Homework"
+
+
+def test_nothing_renders_until_the_demo_password_matches(monkeypatch):
+    monkeypatch.setenv("DEMO_PASSWORD", "chess")
+    app = AppTest.from_file("../frontend/streamlit_app.py").run()
+
+    assert [title.value for title in app.title] == ["Humaniti AI"] and not app.radio
+    app.text_input[0].input("wrong").run()
+    assert app.error[0].value == "Wrong password." and not app.radio
+    app.text_input[0].input("chess").run()
+    assert [title.value for title in app.title] == ["New evaluation"] and app.radio

@@ -1,0 +1,38 @@
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Caddy is the only service reachable from outside; everything else talks over the compose network.
+services:
+  redis:
+    ports: !reset []
+
+  api:
+    ports: !reset []
+    environment:
+      # the browser fetches the signed video link through Caddy, on the same address as the frontend
+      PUBLIC_API_URL: https://${DOMAIN:?set DOMAIN in .env}
+
+  worker:
+    # a named volume keeps the Whisper model across rebuilds, so it downloads only once
+    volumes: ["./data:/app/data", "whisper_models:/app/models"]
+
+  frontend:
+    ports: !reset []
+    environment:
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?set DEMO_PASSWORD in .env}
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # holds the Let's Encrypt certificate; losing it means re-issuing and hitting rate limits
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [frontend, api]
+
+volumes:
+  whisper_models:
+  caddy_data:
+  caddy_config:

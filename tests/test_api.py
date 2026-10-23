@@ -1,5 +1,5 @@
 import pytest
-from conftest import LINK, LINK_FORM, SHA256, VIDEO, finished_evaluation, upload
+from conftest import FILE_NAME, LINK, LINK_FORM, SHA256, VIDEO, finished_evaluation, upload
 
 from app.config import settings
 from app.core.hashing import cache_key
@@ -27,6 +27,15 @@ def test_upload_cache_hit_returns_the_stored_result_without_queueing(api, sessio
     assert (body["id"], body["status"], body["label"]) == (stored, "done", "Good")
     assert body["llm_cost_usd"] == 0.0022
     assert queue.count == 0
+
+
+def test_upload_over_the_limit_is_refused_before_saving(api, queue, monkeypatch):
+    monkeypatch.setattr(settings, "max_upload_mb", 0)
+
+    response = api.post("/evaluations", data={"tutor_name": "Demo Tutor"}, files={"file": (FILE_NAME, VIDEO)})
+
+    assert response.status_code == 413
+    assert not settings.uploads_dir.exists() and queue.count == 0
 
 
 @pytest.mark.parametrize("key", [None, "wrong-key"], ids=["missing key", "wrong key"])

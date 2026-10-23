@@ -86,6 +86,8 @@ def submit_evaluation(
             return _resume(session, queue, crud.find_by_url(session, url, RUBRIC_VERSION, settings.llm_model))
         return _enqueue(session, queue, created)
 
+    if file.size and file.size > settings.max_upload_mb << 20:
+        raise HTTPException(413, f"The file is larger than {settings.max_upload_mb} MB.")
     try:
         video, sha256 = save_upload(file.file, file.filename or "")
     except ValueError as error:

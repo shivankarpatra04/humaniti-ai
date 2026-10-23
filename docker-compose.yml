@@ -39,12 +39,14 @@ services:
     build: ./frontend
     image: humaniti-ai-frontend
     restart: unless-stopped
-    # recordings run to a few hundred MB; Streamlit's default upload limit is 200 MB
-    command: streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.maxUploadSize 2048
+    # recordings run to a few hundred MB; Streamlit's default is 200 MB. Matches max_upload_mb in app/config.py.
+    command: streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.maxUploadSize 1024
       --client.toolbarMode viewer
     environment:
       API_URL: http://api:8000
       # taken from .env by compose variable substitution; the rest of .env never reaches this container
       API_KEY: ${API_KEY}
+      # empty locally, which turns the password gate off; docker-compose.prod.yml requires it
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
     ports: ["8501:8501"]
     depends_on: [api]

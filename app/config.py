@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     job_timeout_s: int = 3 * 3600
     # classes run 30-90 minutes; anything much longer is a wrong file and would block the worker for hours
     max_video_s: int = 3 * 3600
+    # same as Streamlit's --server.maxUploadSize; a 90-minute 720p recording is well under it
+    max_upload_mb: int = 1024
     # more runs only when one verdict flipping between gap and no gap would change the label
     vote_runs: int = 3
     # only for cost reports

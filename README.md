@@ -45,7 +45,7 @@ A video is identified by its SHA-256; the same video under the same rubric and m
 4. **`.env`.** Copy `.env.example` to `.env` and fill in `DATABASE_URL`, `ANTHROPIC_API_KEY` and `API_KEY` (a
    shared secret between the frontend and the API:
    `python -c "import secrets; print(secrets.token_urlsafe(32))"`). `.env` is never committed, and Compose passes
-   only `API_KEY` to the frontend container, never the rest of `.env`.
+   only `API_KEY` and `DEMO_PASSWORD` to the frontend container, never the rest of `.env`.
 5. **Run:**
 
 ```bash
@@ -66,6 +66,9 @@ with a timestamp. The Whisper model downloads into `models/` on first use.
 **Public API URL.** The report's player streams the recording from the API in the reviewer's browser, through a
 signed link that expires after 10 minutes. `PUBLIC_API_URL` (default `http://localhost:8000`) is the address that
 browser reaches the API at; set it when the app runs on another machine.
+
+**Production.** [docs/DEPLOY_GCP.md](docs/DEPLOY_GCP.md) runs the same stack on one VM behind Caddy (HTTPS,
+1 GB uploads, a `DEMO_PASSWORD` gate) with `docker-compose.prod.yml`.
 
 ## Local run
 

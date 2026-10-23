@@ -37,7 +37,7 @@ Follow these rules for every file in this project. They override default habits.
 ## 5. Files and structure
 - Stick to the folder structure in the main prompt. Do not add new top-level folders or extra layers (`services/`, `utils/`, `helpers/`, `common/`).
 - No empty `__init__.py` boilerplate beyond what Python needs. No `__all__`.
-- Config lives only in `app/config.py` (pydantic-settings). No magic numbers scattered in modules — thresholds come from settings. Exception: the frontend reads only `API_URL` and `API_KEY` (the shared X-API-Key secret) from the environment, because it must not import `app.config` (which needs the DB URL and Anthropic key).
+- Config lives only in `app/config.py` (pydantic-settings). No magic numbers scattered in modules — thresholds come from settings. Exception: the frontend reads only `API_URL`, `API_KEY` (the shared X-API-Key secret) and `DEMO_PASSWORD` from the environment, because it must not import `app.config` (which needs the DB URL and Anthropic key).
 - Prompts live in `app/llm/prompts/rubric.md`, not inside Python strings.
 
 ## 6. Tests
